@@ -15,8 +15,17 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URISyntaxException;
 @Slf4j
 public class SocketIo {
-
+    /**
+     * 生产
+     */
     public static final String HOST = "https://www.coinw.com";
+    public static final String ENDPOINT = "wss://ws.futurescw.info";
+
+    /**
+     * 测试
+     */
+    //public static final String HOST = "http://www-test02.cwfutures.fun/";
+    //public static final String ENDPOINT = "ws://ws.ugukimj.cn";
 
     public static final String PUBLIC_TOKEN_URL = HOST + "/pusher/public-token";
 
@@ -29,7 +38,8 @@ public class SocketIo {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(body);
         JsonNode data = jsonNode.get("data");
-        String endpoint = data.get("endpoint").asText();
+        //String endpoint = data.get("endpoint").asText();
+        String endpoint = ENDPOINT;
         String token = data.get("token").asText();
 
         newConnection(endpoint, token);
@@ -49,7 +59,8 @@ public class SocketIo {
         options.query = "token=" + token;
         //UriComponentsBuilder.fromUriString(endpoint)
         //        .scheme("https")
-        String url = endpoint.replaceAll("wss", "https");
+        String url = endpoint.replaceAll("wss://", "https://").replaceAll("ws://", "http://");
+        System.out.println("url:" + url);
         Socket socket = IO.socket(url, options);
 
         socket.on(Socket.EVENT_CONNECT, args -> {
