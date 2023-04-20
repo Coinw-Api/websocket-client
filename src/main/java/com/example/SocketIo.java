@@ -49,7 +49,7 @@ public class SocketIo {
 
     private static void newConnection(String endpoint,String token) throws URISyntaxException {
 
-        String channel = "spot/market-api-ticker:ETH-USDT";
+        String channel = "spot/candle-15m:BTC-USD";
         IO.Options options = new IO.Options();
         options.transports = new String[]{"websocket"};
         options.reconnectionAttempts = 2;
@@ -85,11 +85,9 @@ public class SocketIo {
                 }).on("subscribe", new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        try {
-                            String data = ((JSONObject) args[0]).getString("data");
-                            log.info("client data:{}", data);
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                        for (int i = 0; i < args.length; i++) {
+                            //String data = ((JSONObject) args[0]).getString("data");
+                            log.info("client data[{}]:{}", i, args[i]);
                         }
                     }
                 }).on(Socket.EVENT_PONG, new Emitter.Listener() {
