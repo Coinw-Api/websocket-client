@@ -1,5 +1,3 @@
-package com.example;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +47,7 @@ public class SocketIo {
 
     private static void newConnection(String endpoint,String token) throws URISyntaxException {
 
-        String channel = "spot/candle-15m:BTC-USD";
+        String channel = "spot/candle-15m:BTC-USDT";
         IO.Options options = new IO.Options();
         options.transports = new String[]{"websocket"};
         options.reconnectionAttempts = 2;
