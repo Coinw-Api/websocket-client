@@ -46,7 +46,7 @@ public class SocketIo {
     }
 
     private static void newConnection(String endpoint,String token) throws URISyntaxException {
-
+        //todo 根据接口实际情况修改(请求参数:args)
         String channel = "spot/candle-15m:BTC-USDT";
         IO.Options options = new IO.Options();
         options.transports = new String[]{"websocket"};
