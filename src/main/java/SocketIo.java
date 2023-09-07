@@ -19,12 +19,6 @@ public class SocketIo {
     public static final String HOST = "https://www.coinw.com";
     public static final String ENDPOINT = "wss://ws.futurescw.info";
 
-    /**
-     * 测试
-     */
-    //public static final String HOST = "http://www-test02.cwfutures.fun/";
-    //public static final String ENDPOINT = "ws://ws.ugukimj.cn";
-
     public static final String PUBLIC_TOKEN_URL = HOST + "/pusher/public-token";
 
     public static void main(String[] args) throws JsonProcessingException, URISyntaxException {
