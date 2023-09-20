@@ -1,8 +1,9 @@
-#  coinw  Api Documentation
+#  coinw  Api 文档
+[English Documentation](README-en.md)
 
-[API Documentation](https://www.coinw.com/front/API)
+[API 文档](https://www.coinw.com/front/API)
 
-## Web Socket Example
+## Web Socket 示例
 
 ### Java 
 
@@ -163,7 +164,7 @@ public class SocketIo {
 </html>
 ```
 
-## API Example   
+## API 示例   
 
 ### Python
 <br/>
