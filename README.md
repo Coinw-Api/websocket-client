@@ -1,10 +1,11 @@
-#  coinw  Api Documentation
+#  coinw  Api 文档
+[English Documentation](README-en.md)
 
-[API Documentation](https://www.coinw.com/front/API)
+[API 文档](https://www.coinw.com/front/API)
 
-## Web Socket Example
-
+## Web Socket 示例
 ### Java 
+[SocketIo.java](src%2Fmain%2Fjava%2FSocketIo.java)
 
 ```java
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,17 +21,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URISyntaxException;
+import java.util.Objects;
+import java.util.PriorityQueue;
+import java.util.Queue;
+
 @Slf4j
 public class SocketIo {
     /**
      * 生产
      */
-    public static final String HOST = "https://www.coinw.com";
+    public static final String HOST = "https://www.coinw.loan";
     public static final String ENDPOINT = "wss://ws.futurescw.info";
 
     public static final String PUBLIC_TOKEN_URL = HOST + "/pusher/public-token";
 
+
     public static void main(String[] args) throws JsonProcessingException, URISyntaxException {
+        connection();
+    }
+
+    private static void connection() throws JsonProcessingException, URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.getForEntity(PUBLIC_TOKEN_URL, String.class);
         String body = response.getBody();
@@ -44,17 +54,17 @@ public class SocketIo {
         String token = data.get("token").asText();
 
         newConnection(endpoint, token);
-        //new Scanner(System.in).nextLine(); // Don't close immediately.
-
     }
 
     private static void newConnection(String endpoint,String token) throws URISyntaxException {
         //todo 根据接口实际情况修改(请求参数:args)
-        String channel = "spot/candle-15m:BTC-USDT";
+        //String channel = "spot/candle-15m:BTC-USDT";
+        String channel = "spot/market-api-ticker:BTC-USDT";
         IO.Options options = new IO.Options();
         options.transports = new String[]{"websocket"};
         options.reconnectionAttempts = 2;
         options.reconnectionDelay = 10000; // 失败重连的时间间隔(ms)
+        options.rememberUpgrade = true;
         options.timeout = 200000; // 连接超时时间(ms)
         options.forceNew = true;
         options.query = "token=" + token;
@@ -67,6 +77,27 @@ public class SocketIo {
         socket.on(Socket.EVENT_CONNECT, args -> {
                     log.info("已连接");
                     socket.emit("subscribe", "{\"args\": \"" + channel + "\"}");
+                })
+                .on(Socket.EVENT_RECONNECT, new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        log.info("重新连接，{}", args);
+
+                    }
+                })
+                .on(Socket.EVENT_RECONNECT_ERROR, new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        log.info("重新连接错误，{}", args);
+
+                    }
+                })
+                .on(Socket.EVENT_RECONNECT_FAILED, new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        log.info("重新连接失败，{}", args);
+
+                    }
                 })
                 .on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
                     @Override
@@ -81,7 +112,15 @@ public class SocketIo {
                 }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
+                        //io server disconnect
                         log.info("链接断开，{}", args);
+                        try {
+                            if (Objects.equals("io server disconnect", args[0])) {
+                                connection();
+                            }
+                        } catch (Exception e) {
+                            log.error("重连错误:{}", e.getMessage());
+                        }
                     }
                 }).on("subscribe", new Emitter.Listener() {
                     @Override
@@ -90,6 +129,7 @@ public class SocketIo {
                             //String data = ((JSONObject) args[0]).getString("data");
                             log.info("client data[{}]:{}", i, args[i]);
                         }
+                        socket.disconnect();
                     }
                 }).on(Socket.EVENT_PONG, new Emitter.Listener() {
 
@@ -99,11 +139,11 @@ public class SocketIo {
                     }
                 });
         socket.connect();
+        //socket.disconnect();
     }
 }
 
 ```
-
 ### JS
 
 ```html
@@ -163,7 +203,7 @@ public class SocketIo {
 </html>
 ```
 
-## API Example   
+## API 示例   
 
 ### Python
 <br/>

@@ -11,22 +11,31 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URISyntaxException;
+import java.util.Objects;
+import java.util.PriorityQueue;
+import java.util.Queue;
+
 @Slf4j
 public class SocketIo {
     /**
-     * 生产
+     * Production
      */
     public static final String HOST = "https://www.coinw.com";
     public static final String ENDPOINT = "wss://ws.futurescw.info";
 
     public static final String PUBLIC_TOKEN_URL = HOST + "/pusher/public-token";
 
+
     public static void main(String[] args) throws JsonProcessingException, URISyntaxException {
+        connection();
+    }
+
+    private static void connection() throws JsonProcessingException, URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.getForEntity(PUBLIC_TOKEN_URL, String.class);
         String body = response.getBody();
         log.info("response body:{}", body);
-        //解析json
+        //Parse json
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(body);
         JsonNode data = jsonNode.get("data");
@@ -35,18 +44,17 @@ public class SocketIo {
         String token = data.get("token").asText();
 
         newConnection(endpoint, token);
-        //new Scanner(System.in).nextLine(); // Don't close immediately.
-
     }
 
     private static void newConnection(String endpoint,String token) throws URISyntaxException {
-        //todo 根据接口实际情况修改(请求参数:args)
-        String channel = "spot/candle-15m:BTC-USDT";
+        //todo modify according to actual status of interface (parameters of request: args)
+        //String channel = "spot/candle-15m:BTC-USDT";
+        String channel = "spot/market-api-ticker:BTC-USDT";
         IO.Options options = new IO.Options();
         options.transports = new String[]{"websocket"};
         options.reconnectionAttempts = 2;
-        options.reconnectionDelay = 10000; // 失败重连的时间间隔(ms)
-        options.timeout = 200000; // 连接超时时间(ms)
+        options.reconnectionDelay = 10000; // time interval of reconnection(ms) after failure
+        options.timeout = 200000; // duration of connection timeout (ms)
         options.forceNew = true;
         options.query = "token=" + token;
         //UriComponentsBuilder.fromUriString(endpoint)
@@ -56,23 +64,39 @@ public class SocketIo {
         Socket socket = IO.socket(url, options);
 
         socket.on(Socket.EVENT_CONNECT, args -> {
-                    log.info("已连接");
+                    log.info("connected");
                     socket.emit("subscribe", "{\"args\": \"" + channel + "\"}");
                 })
+                .on(Socket.EVENT_RECONNECT, new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        log.info("reconnect，{}", args);
+
+                    }
+                })
+
                 .on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        log.info("链接异常，{}", args);
+                        log.info("connection error，{}", args);
                     }
                 }).on(Socket.EVENT_CONNECT_TIMEOUT, new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        log.info("链接超时，{}", args);
+                        log.info("connection timeout，{}", args);
                     }
                 }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        log.info("链接断开，{}", args);
+                        //io server disconnect
+                        log.info("disconnection，{}", args);
+                        try {
+                            if (Objects.equals("io server disconnect", args[0])) {
+                                connection();
+                            }
+                        } catch (Exception e) {
+                            log.error("connection error:{}", e.getMessage());
+                        }
                     }
                 }).on("subscribe", new Emitter.Listener() {
                     @Override
@@ -81,6 +105,7 @@ public class SocketIo {
                             //String data = ((JSONObject) args[0]).getString("data");
                             log.info("client data[{}]:{}", i, args[i]);
                         }
+                        socket.disconnect();
                     }
                 }).on(Socket.EVENT_PONG, new Emitter.Listener() {
 
@@ -90,5 +115,6 @@ public class SocketIo {
                     }
                 });
         socket.connect();
+        //socket.disconnect();
     }
 }
